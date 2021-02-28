@@ -1,18 +1,45 @@
-﻿using SQLite;
+﻿using ProfileBook.Models;
+using SQLite;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Input;
+using Xamarin.Forms;
 
 namespace ProfileBook.Model
 {
     [Table("DataProfile")]
-    public class DataProfile
+    public class DataProfile : IEntity
     {
-        [PrimaryKey, AutoIncrement, Column("_id")]
+        [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-
+        public string Image { get; set; }
+        public string NickName { get; set; }
         public string Name { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
+        public string Description { get; set; }
+        public DateTime CreationDate { get; set; }
+
+        public int UserId { get; set; }
+
+        public DataProfile()
+        {
+            this.Image = "pic_profile.png";
+            this.UserId = App.CurrentUser.Id;
+            this.CreationDate = DateTime.Now;
+        }
+
+        public event EventHandler EditProfile;
+        public event EventHandler RemoveProfile;
+        public event EventHandler ShowImage;
+
+        public ICommand RemoveProfileCommand => new Command(() => {
+            RemoveProfile?.Invoke(this, new EventArgs());
+        });
+        public ICommand EditProfileCommand => new Command(() => {
+            EditProfile?.Invoke(this, new EventArgs());
+        });
+        public ICommand ShowImageCommand => new Command(() => {
+            ShowImage?.Invoke(this, new EventArgs());
+        });
     }
 }

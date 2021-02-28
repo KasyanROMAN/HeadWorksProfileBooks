@@ -5,7 +5,7 @@
              Title="{Binding Title}">
     <StackLayout>
         <Entry x:Name="Login" Placeholder="Login" Margin="80,200,80,0"/>
-        <Entry x:Name="Pass"  Placeholder="Password" IsPassword="True" MaxLength="16" Margin="80,0,80,0"/>
+        <Entry x:Name="Password"  Placeholder="Password" IsPassword="True" MaxLength="16" Margin="80,0,80,0"/>
 
 
         <Button x:Name="SignIn"
@@ -15,7 +15,9 @@
                 CornerRadius="10"
                 TextColor="White"
                 HorizontalOptions="Center"
-                WidthRequest="260"/>
+                WidthRequest="260"
+                Command="{Binding SignInCommand}"
+                IsEnabled="{Binding IsButtonEnabled}"/>
 
         <Label TextColor="Blue" HorizontalOptions="Center" VerticalOptions="Center">
             <Label.FormattedText>
