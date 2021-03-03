@@ -1,7 +1,17 @@
 using Prism;
 using Prism.Ioc;
+using ProfileBook.Dialogs;
 using ProfileBook.Models;
+using ProfileBook.Repositories;
+using ProfileBook.Services;
+using ProfileBook.Services.Authentication;
+using ProfileBook.Services.Authorization;
+using ProfileBook.Services.Main;
+using ProfileBook.Services.Profile;
+using ProfileBook.Services.Repository;
+using ProfileBook.Services.Settings;
 using ProfileBook.ViewModels;
+using ProfileBook.ViewModels.Dialogs;
 using ProfileBook.Views;
 using System;
 using System.IO;
@@ -12,56 +22,45 @@ namespace ProfileBook
 {
     public partial class App
     {
-        /// <summary>
-        /// local user
-        /// </summary>
-        public static UserModel CurrentUser { get; set; }
-        /// <summary>
-        /// local settings
-        /// </summary>
-
-        /// <summary>
-        /// update list in the main page after navigation
-        /// </summary>
+        public static User CurrentUser { get; set; }
+        public static Settings CurrentSettings { get; set; }
         public static bool UpdateList { get; set; }
 
-        public App(IPlatformInitializer initializer)
-            : base(initializer)
-        {
-        }
-        public const string DATABASE_NAME = "friends.db";
-        internal static Repository database;
-        internal static Repository Database
-        {
-            get
-            {
-                if (database == null)
-                {
-                    database = new Repository(
-                        Path.Combine(
-                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), DATABASE_NAME));
-                }
-                return database;
-            }
-        }
+        public App(IPlatformInitializer initializer) : base(initializer) { }
+
         protected override async void OnInitialized()
         {
             InitializeComponent();
+            CurrentUser = LocalService.ReadUser();
 
-            await NavigationService.NavigateAsync("NavigationPage/MainPage");
+            if (CurrentUser == null)
+            {
+                await NavigationService.NavigateAsync("NavigationPage/SignInPage");
+            }
+            else
+            {
+                UpdateList = true;
+                await NavigationService.NavigateAsync("NavigationPage/MainListPage");
+            }
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.RegisterSingleton<IAppInfo, AppInfoImplementation>();
-
+            containerRegistry.Register(typeof(IRepository<>), typeof(Repository<>));
+            containerRegistry.Register<IAuthenticationService, AuthenticationService>();
+            containerRegistry.Register<IAuthorizationService, AuthorizationService>();
+            containerRegistry.Register<IMainService, MainService>();
+            containerRegistry.Register<IProfileService, ProfileService>();
+            containerRegistry.Register<ISettingsService, SettingsService>();
+            containerRegistry.RegisterDialog<ShowImageDialog, ShowImageDialogViewModel>();
+            containerRegistry.RegisterDialog<PickImageDialog, PickImageDialogViewModel>();
             containerRegistry.RegisterForNavigation<NavigationPage>();
-            containerRegistry.RegisterForNavigation<MainPage, MainPageViewModel>();
-
-
-            containerRegistry.RegisterForNavigation<AddProfile, AddProfileViewModel>();
-            containerRegistry.RegisterForNavigation<ChangePage, ChangePageViewModel>();
-            containerRegistry.RegisterForNavigation<RegistrationPage, RegistrationPageViewModel>();
+            containerRegistry.RegisterForNavigation<SignInPage, SignInPageViewModel>();
+            containerRegistry.RegisterForNavigation<SignUpPage, RegistrationPageViewModel>();
+            containerRegistry.RegisterForNavigation<MainListPage, MainListPageViewModel>();
+            containerRegistry.RegisterForNavigation<AddEditPage, AddEditPageViewModel>();
         }
+
     }
 }

@@ -1,16 +1,39 @@
-﻿using ProfileBook.Services.Settings;
+﻿using Prism.Services;
+using ProfileBook.Models;
+using ProfileBook.Services.Repository;
+using System.Threading.Tasks;
 
 namespace ProfileBook.Services.Authorization
 {
     public class AuthorizationService : IAuthorizationService
     {
-        public AuthorizationService(ISettingsManager settingsManager)
+        private IRepository<User> repository;
+        private IPageDialogService pageDialogService;
+
+        public AuthorizationService(IRepository<User> repository, IPageDialogService pageDialogService)
         {
-            _settingsManager = settingsManager;
+            this.repository = repository;
+            this.pageDialogService = pageDialogService;
         }
 
-        private readonly ISettingsManager _settingsManager;
-        
-        public bool Authorized => _settingsManager.RememberedUserLogin != string.Empty;
+        public async Task<bool> RegUser(string login, string password, string confirmPassword)
+        {
+            User user = await repository.FindWithCommand($"SELECT * FROM Users WHERE Login='{login}'");
+            if (user != null) {
+                await this.pageDialogService.DisplayAlertAsync("SignUp", "Login already exists", "OK");
+                return false;
+            }
+            string hints = Validators.ValidationHints.GetSignUpHints(login, password, confirmPassword);
+            if (hints.Length > 0) {
+                await this.pageDialogService.DisplayAlertAsync("SignUp", hints, "OK");
+                return false;
+            }
+            var new_user = new User() {
+                Login = login,
+                Password = password
+            };
+            await repository.Add(new_user);
+            return true;
+        }
     }
 }

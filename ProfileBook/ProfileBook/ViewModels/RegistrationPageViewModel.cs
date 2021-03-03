@@ -1,126 +1,70 @@
-﻿using Acr.UserDialogs;
-using Prism.Commands;
-using Prism.Mvvm;
+﻿using Prism.Commands;
 using Prism.Navigation;
-using ProfileBook.Models;
-using ProfileBook.Services.Repository;
-using ProfileBook.Validators;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using ProfileBook.Services.Authorization;
 
 namespace ProfileBook.ViewModels
 {
     public class RegistrationPageViewModel : ViewModelBase
     {
-        public RegistrationPageViewModel(INavigationService navigationService, IRepositoryService repositoryService) :
-            base(navigationService)
-        {
+        private readonly IAuthorizationService authorizationService;
 
-            Title = "Users SignUp";
-
-            _repositoryService = repositoryService;
-        }
-
-        private IRepositoryService _repositoryService;
-
-        private DelegateCommand _signUpCommand;
-        public DelegateCommand SignUpCommand =>
-            _signUpCommand ?? (_signUpCommand = new DelegateCommand(ExecuteSignUpCommand));
-
-        private bool _isButtonEnabled;
-        public bool IsEnabled
-        {
-            get => _isButtonEnabled;
-            private set => SetProperty(ref _isButtonEnabled, value);
-        }
-
-        private string _login;
-        public string Login
-        {
-            get => _login;
-            set
-            {
-                SetProperty(ref _login, value);
-
-                UpdateSignUpButtonState();
+        private string userLogin;
+        public string UserLogin {
+            get => userLogin;
+            set {
+                SetProperty(ref userLogin, value, nameof(UserLogin));
+                RaiseValidationChanded();
             }
         }
-
-        private string _password;
-        public string Password
-        {
-            get => _password;
-            set
-            {
-                SetProperty(ref _password, value);
-
-                UpdateSignUpButtonState();
+        private string userPassword;
+        public string UserPassword {
+            get => userPassword;
+            set {
+                SetProperty(ref userPassword, value, nameof(UserPassword));
+                RaiseValidationChanded();
             }
         }
-
-        private string _confirmPassword;
-        public string ConfirmPassword
-        {
-            get => _confirmPassword;
-            set
-            {
-                SetProperty(ref _confirmPassword, value);
-
-                UpdateSignUpButtonState();
+        private string userConfirmPassword;
+        public string UserConfirmPassword {
+            get => userConfirmPassword;
+            set {
+                SetProperty(ref userConfirmPassword, value, nameof(UserConfirmPassword));
+                RaiseValidationChanded();
             }
         }
-
-        private void UpdateSignUpButtonState()
-        {
-            bool allEntriesAreFilled = !string.IsNullOrEmpty(_login) &&
-                                       !string.IsNullOrEmpty(_password) &&
-                                       !string.IsNullOrEmpty(_confirmPassword);
-
-            IsEnabled = allEntriesAreFilled;
+        private bool isValid;
+        public bool IsValid {
+            get { return isValid; }
+            set { SetProperty(ref isValid, value, nameof(IsValid)); }
         }
 
-        private async void ExecuteSignUpCommand()
+        private void RaiseValidationChanded()
         {
-            if (Password == ConfirmPassword)
-            {
-                var loginValid = StringValidator.Validate(Login, StringValidator.Login);
-                var passwordValid = StringValidator.Validate(Password, StringValidator.Password);
+            this.IsValid = UserPassword != null &&
+                           UserPassword.Length != 0 && 
+                           UserLogin != null &&
+                           UserLogin.Length != 0 && 
+                           UserConfirmPassword != null &&
+                           UserConfirmPassword.Length != 0;
+        }
+        public RegistrationPageViewModel(INavigationService navigationService, IAuthorizationService authorizationService) : base(navigationService)
+        {
+            this.authorizationService = authorizationService;
 
-                if (!loginValid)
-                {
-                    UserDialogs.Instance.Alert("First letter must be non-digit.\n" +
-                                               "Login length must be from 4 to 16 characters", "Invalid login!");
-                }
-                else if (!passwordValid)
-                {
-                    UserDialogs.Instance.Alert("Use at least 1 digit.\n" +
-                                               "Use at least 1 lowercase letter.\n" +
-                                               "Use at least 1 uppercase letter.\n" +
-                                               "Password length must be from 8 to 16 characters.", "Invalid password!");
-                }
-                else
-                {
-                    int result = await _repositoryService.InsertItemAsync(new UserModel()
-                    { Login = Login, Password = Password });
+            this.userLogin = String.Empty;
+            this.userPassword = String.Empty;
+            this.userConfirmPassword = String.Empty;
 
-                    if (result == -1)
-                    {
-                        UserDialogs.Instance.Alert("Such user already exists!", "Register failed!");
-                    }
-                    else
-                    {
-                        UserDialogs.Instance.Alert($"Dear {Login}, you've been successfully register!\n" +
-                                                   $"Sign in to continue.", "Successfully registered!", "OK");
-
-                        var parameters = new NavigationParameters { { nameof(Login), Login } };
-                        await NavigationService.GoBackAsync(parameters);
-                    }
-                }
-            }
-            else
-            {
-                UserDialogs.Instance.Alert("Passwords are different!");
+            this.SignUpCommand = new DelegateCommand(executeSignUp).ObservesCanExecute(() => IsValid);
+        }
+        public DelegateCommand SignUpCommand { get; set; }
+        private async void executeSignUp()
+        {
+            if (await authorizationService.RegUser(this.UserLogin, this.UserPassword, this.UserConfirmPassword)) {
+                var nav_params = new NavigationParameters();
+                nav_params.Add("Login", this.UserLogin);
+                await NavigationService.NavigateAsync("/NavigationPage/SignInPage", nav_params);
             }
         }
     }

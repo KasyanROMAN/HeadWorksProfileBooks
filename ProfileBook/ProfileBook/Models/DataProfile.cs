@@ -1,14 +1,11 @@
-﻿using ProfileBook.Models;
-using SQLite;
+﻿using SQLite;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows.Input;
 using Xamarin.Forms;
 
-namespace ProfileBook.Model
+namespace ProfileBook.Models
 {
-    [Table("DataProfile")]
+    [Table("Profiles")]
     public class DataProfile : IEntity
     {
         [PrimaryKey, AutoIncrement]
@@ -20,7 +17,7 @@ namespace ProfileBook.Model
         public DateTime CreationDate { get; set; }
 
         public int UserId { get; set; }
-
+        
         public DataProfile()
         {
             this.Image = "pic_profile.png";

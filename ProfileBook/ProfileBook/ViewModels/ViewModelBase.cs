@@ -1,9 +1,7 @@
-﻿using Prism.Commands;
-using Prism.Mvvm;
+﻿using Prism.Mvvm;
 using Prism.Navigation;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using ProfileBook.Localization;
+using ProfileBook.Properties;
 
 namespace ProfileBook.ViewModels
 {
@@ -11,16 +9,14 @@ namespace ProfileBook.ViewModels
     {
         protected INavigationService NavigationService { get; private set; }
 
-        private string _title;
-        public string Title
-        {
-            get { return _title; }
-            set { SetProperty(ref _title, value); }
-        }
+        public LocalizedResources Resources { get; private set; }
 
         public ViewModelBase(INavigationService navigationService)
         {
             NavigationService = navigationService;
+
+            
+               
         }
 
         public virtual void Initialize(INavigationParameters parameters)

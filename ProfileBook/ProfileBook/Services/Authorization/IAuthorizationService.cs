@@ -1,7 +1,9 @@
-﻿namespace ProfileBook.Services.Authorization
+﻿using System.Threading.Tasks;
+
+namespace ProfileBook.Services.Authorization
 {
     public interface IAuthorizationService
     {
-        bool Authorized { get; }
+        Task<bool> RegUser(string login, string password, string confirmPassword);
     }
 }
